@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 # EDIT THIS before adding the script in Verda.
-COMFY_IMAGE="ghcr.io/REPLACE_WITH_LOWERCASE_GITHUB_USERNAME/verda-comfy:latest"
+COMFY_IMAGE="ghcr.io/tekhero-production/verda-comfy:latest"
 
 exec > >(tee -a /var/log/verda-comfy-bootstrap.log) 2>&1
 echo "[$(date -Is)] Starting Verda Comfy bootstrap"
