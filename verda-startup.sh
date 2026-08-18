@@ -1,8 +1,8 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-# EDIT THIS before adding the script in Verda.
-COMFY_IMAGE="ghcr.io/tekhero-production/verda-comfy:latest"
+# RTX PRO 6000 Blackwell image built by this repository.
+COMFY_IMAGE="ghcr.io/tekhero-production/verda-comfy:blackwell-cu128-2026-08-18"
 
 exec > >(tee -a /var/log/verda-comfy-bootstrap.log) 2>&1
 echo "[$(date -Is)] Starting Verda Comfy bootstrap"
@@ -53,6 +53,18 @@ chmod 600 /etc/verda-comfy.env
 
 echo "Pulling prepared ComfyUI image: ${COMFY_IMAGE}"
 docker pull "${COMFY_IMAGE}"
+
+if ! command -v nvidia-smi >/dev/null 2>&1; then
+  echo "nvidia-smi is unavailable. Select a Verda Ubuntu image with CUDA and Docker."
+  exit 1
+fi
+
+echo "Detected host GPU and driver:"
+nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
+
+echo "Validating the CUDA 12.8 container on the Blackwell GPU..."
+docker run --rm --gpus all "${COMFY_IMAGE}" \
+  python -c 'import torch; assert torch.cuda.is_available(); capability = torch.cuda.get_device_capability(0); print("torch:", torch.__version__); print("CUDA build:", torch.version.cuda); print("GPU:", torch.cuda.get_device_name(0)); print("compute capability:", capability); assert torch.version.cuda == "12.8"; assert capability == (12, 0)'
 
 cat >/usr/local/bin/start-comfy-session <<'START_SCRIPT'
 #!/bin/bash
